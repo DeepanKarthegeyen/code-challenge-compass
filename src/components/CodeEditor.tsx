@@ -27,22 +27,29 @@ const CodeEditor: React.FC<CodeEditorProps> = ({ challengeId }) => {
   
   const challenge = getChallengeById(challengeId);
 
+  const getCodeTemplate = (lang: string) => {
+    const templates = {
+      python: '# Write your solution here\ndef solution():\n    pass',
+      javascript: '// Write your solution here\nfunction solution() {\n    \n}',
+      java: 'public class Solution {\n    public static void main(String[] args) {\n        // Write your solution here\n    }\n}',
+      csharp: 'using System;\n\npublic class Solution {\n    public static void Main() {\n        // Write your solution here\n    }\n}',
+      cpp: '#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}',
+      sql: '-- Write your SQL query here\nSELECT * FROM table_name;'
+    };
+    return templates[lang as keyof typeof templates] || templates.python;
+  };
+
   useEffect(() => {
     if (challenge) {
       setTimeLeft(challenge.timeLimit * 60);
       setLanguage(challenge.language);
-      
-      const templates = {
-        python: '# Write your solution here\ndef solution():\n    pass',
-        javascript: '// Write your solution here\nfunction solution() {\n    \n}',
-        java: 'public class Solution {\n    public static void main(String[] args) {\n        // Write your solution here\n    }\n}',
-        csharp: 'using System;\n\npublic class Solution {\n    public static void Main() {\n        // Write your solution here\n    }\n}',
-        cpp: '#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}',
-        sql: '-- Write your SQL query here\nSELECT * FROM table_name;'
-      };
-      setCode(templates[language as keyof typeof templates] || '');
+      setCode(getCodeTemplate(challenge.language));
     }
-  }, [challenge, language]);
+  }, [challenge]);
+
+  useEffect(() => {
+    setCode(getCodeTemplate(language));
+  }, [language]);
 
   useEffect(() => {
     if (timeLeft > 0) {
@@ -83,13 +90,27 @@ const CodeEditor: React.FC<CodeEditorProps> = ({ challengeId }) => {
     setOutput('Running code...');
 
     setTimeout(() => {
+      // Simulate more realistic test results - sometimes fail
+      const totalTests = challenge.testCases.length;
+      const passedTests = Math.floor(Math.random() * (totalTests + 1)); // 0 to totalTests
+      
       const mockResults = {
-        passed: Math.floor(Math.random() * challenge.testCases.length) + 1,
-        total: challenge.testCases.length
+        passed: passedTests,
+        total: totalTests
       };
       
       setTestResults(mockResults);
-      setOutput(`Execution completed!\nTest cases passed: ${mockResults.passed}/${mockResults.total}`);
+      
+      let outputMessage = `Execution completed!\nTest cases passed: ${mockResults.passed}/${mockResults.total}`;
+      if (mockResults.passed === mockResults.total) {
+        outputMessage += '\n✅ All test cases passed!';
+      } else if (mockResults.passed > 0) {
+        outputMessage += '\n⚠️ Some test cases failed.';
+      } else {
+        outputMessage += '\n❌ All test cases failed.';
+      }
+      
+      setOutput(outputMessage);
       
       if (currentUser) {
         const submission: Submission = {
@@ -108,7 +129,8 @@ const CodeEditor: React.FC<CodeEditorProps> = ({ challengeId }) => {
         
         toast({
           title: submission.status === 'Accepted' ? "Success!" : "Partial Success",
-          description: `${mockResults.passed}/${mockResults.total} test cases passed`
+          description: `${mockResults.passed}/${mockResults.total} test cases passed`,
+          variant: submission.status === 'Accepted' ? "default" : "destructive"
         });
       }
       
