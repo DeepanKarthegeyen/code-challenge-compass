@@ -29,10 +29,9 @@ const CodeEditor: React.FC<CodeEditorProps> = ({ challengeId }) => {
 
   useEffect(() => {
     if (challenge) {
-      setTimeLeft(challenge.timeLimit * 60); // Convert to seconds
+      setTimeLeft(challenge.timeLimit * 60);
       setLanguage(challenge.language);
       
-      // Set default code template based on language
       const templates = {
         python: '# Write your solution here\ndef solution():\n    pass',
         javascript: '// Write your solution here\nfunction solution() {\n    \n}',
@@ -83,7 +82,6 @@ const CodeEditor: React.FC<CodeEditorProps> = ({ challengeId }) => {
     setIsRunning(true);
     setOutput('Running code...');
 
-    // Simulate code execution
     setTimeout(() => {
       const mockResults = {
         passed: Math.floor(Math.random() * challenge.testCases.length) + 1,
